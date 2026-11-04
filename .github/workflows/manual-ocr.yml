@@ -1,1 +1,63 @@
 
+name: Manual Persian OCR Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      google_drive_url:
+        description: "Google Drive model ZIP link"
+        required: true
+        type: string
+      image_url:
+        description: "Direct image URL"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  run-ocr:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Download model and run OCR
+        env:
+          GOOGLE_DRIVE_URL: ${{ inputs.google_drive_url }}
+          IMAGE_URL: ${{ inputs.image_url }}
+        run: python run_ocr.py
+
+      - name: Show OCR result
+        if: always()
+        run: |
+          if [ -f ocr-result.txt ]; then
+            echo "## OCR Result" >> "$GITHUB_STEP_SUMMARY"
+            cat ocr-result.txt >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Save OCR result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persian-ocr-result
+          path: |
+            ocr-result.txt
+            ocr-result.json
+          if-no-files-found: ignore
+
