@@ -1,0 +1,5 @@
+paddlepaddle==3.2.2
+paddleocr==3.3.2
+gdown==5.2.0
+requests>=2.31,<3
+Pillow>=10,<13
